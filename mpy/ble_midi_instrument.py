@@ -1,7 +1,7 @@
 import bluetooth
 from micropython import const
 from time import sleep
-import asyncio
+
 
 # IRQ constants
 _IRQ_CENTRAL_CONNECT = const(1)
@@ -161,7 +161,7 @@ class BLEMidi:
         note_off_message = bytearray([0x80, note_number, velocity])
         self.send(note_off_message)
     
-    async def send_note(self, note_number, velocity=127, duration_s=1):
+    def send_note(self, note_number, velocity=127, duration_s=1):
         """
         Send a MIDI Note on message, then send an off message after set interval
         
@@ -171,6 +171,6 @@ class BLEMidi:
         """
         note_on = bytearray([0x90, note_number, velocity])
         self.send(note_on)
-        await asyncio.sleep(duration_s)
+        sleep(duration_s)
         note_off_message = bytearray([0x80, note_number, velocity])
         self.send(note_off_message)

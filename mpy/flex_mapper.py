@@ -23,17 +23,22 @@ class FlexSensorMapper:
         # Read current flex sensor values and compare with thresholds
         current_values = [fs.read() >= threshold for fs, threshold in zip(self.flex_sensors, self.thresholds)]
         triggered_notes = []
-        # Check for new triggers (False to True transitions)
+        detriggered_notes = []
+        # Check for state transitions
         for i in range(5):
             if current_values[i] and not self.previous_values[i]:
-                # Map the flex sensor index to the current note based on start_index
+                # Triggered: False to True transition
                 note = self.note_list[self.start_index + i]
                 triggered_notes.append(note)
+            elif not current_values[i] and self.previous_values[i]:
+                # Detriggered: True to False transition
+                note = self.note_list[self.start_index + i]
+                detriggered_notes.append(note)
         # Update previous values
         self.previous_values = current_values[:]
         if verbose:
-            print(triggered_notes)
-        return triggered_notes
+            print(f"Triggered: {triggered_notes}, Detriggered: {detriggered_notes}")
+        return triggered_notes, detriggered_notes
 
     def switch_left(self):
         # Shift the mapping left by one white key if not at the start

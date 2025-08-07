@@ -1,6 +1,5 @@
+import time
 from machine import Pin, I2C, UART
-import asyncio
-import _thread
 import bluetooth
 import jy901b, flexsensor, ssd1306
 from ble_midi_instrument import BLEMidi, NOTE
@@ -15,8 +14,6 @@ midi = BLEMidi(ble, name="MIDIMitts")
 
 mapper = FlexSensorMapper()
 
-time_since_last_switch = 0
-
 def draw_frame(display, primary_text: str, secondary_text: str):
     display.fill_rect(0, 0, 128, 16, 1)
     display.text(secondary_text, 0, 0, 0)
@@ -30,9 +27,20 @@ def initialize():
     imu.save_settings()
     # Flex sensor calibration is now handled in FlexSensorMapper.__init__
 
-async def main():
-    global time_since_last_switch
-    
+def handle_imu_switching(angles, last_switch_time, mapper, cooldown_s=2, threshold=45, reverse:bool=False):
+    """Handle IMU-based switching based on pitch angle, with a set cooldown. Left/right can be reversed"""
+    current_time = time.time()
+    if current_time - last_switch_time >= cooldown_s:
+        if (angles["pitch"] >= threshold and reverse = False) or (angles["pitch"] <= -threshold and reverse = True):
+            mapper.switch_left()
+            last_switch_time = current_time
+        elif (angles["pitch"] <= -threshold and reverse = False) or (angles["pitch"] >= threshold and reverse = True):
+            mapper.switch_right()
+            last_switch_time = current_time
+    return last_switch_time
+
+def main():
+    last_switch_time = 0  # Initialize the time of the last switch
     while True:
         primary_text = ""
         secondary_text = ""
@@ -40,27 +48,18 @@ async def main():
         display.fill(0)
         imu.update()
         angles = imu.get_angles()
-        #accel = imu.get_acceleration()
-        #gyro = imu.get_angular_velocity()
         
         # Get triggered notes from the mapper
-        triggered_notes = mapper.read(verbose=False)
+        triggered_notes, detriggered_notes = mapper.read(verbose=False)
         for note in triggered_notes:
-            #_thread.start_new_thread(midi.send_note, (NOTE[note],))
-            asyncio.create_task(midi.send_note(NOTE[note]))
+            midi.note_on(NOTE[note])
             primary_text += (note + " ")
-        if angles:
-            #secondary_text = str(gyro['gy'])
-            print(angles)
-            if time_since_last_switch >= 2:
-                if angles["pitch"] >= 45:
-                    mapper.switch_left()
-                elif angles["pitch"] <= -45:
-                    mapper.switch_right()
-            
-
+        for note in detriggered_notes:
+            midi.note_off(NOTE[note])
         
-        time_since_last_switch += 0.1
+        if angles:
+            secondary_text = str(angles['pitch'])
+            last_switch_time = handle_imu_switching(angles, last_switch_time, mapper)
         
         draw_frame(display, primary_text, secondary_text)
         try:
@@ -68,8 +67,8 @@ async def main():
         except BaseException as e:
             print(e)
         
-        await asyncio.sleep(0.1)
+        time.sleep(0.1)
 
 if __name__ == '__main__':
     initialize()
-    asyncio.run(main())
+    main()
