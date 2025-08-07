@@ -31,10 +31,10 @@ def handle_imu_switching(angles, last_switch_time, mapper, cooldown_s=2, thresho
     """Handle IMU-based switching based on pitch angle, with a set cooldown. Left/right can be reversed"""
     current_time = time.time()
     if current_time - last_switch_time >= cooldown_s:
-        if (angles["pitch"] >= threshold and reverse = False) or (angles["pitch"] <= -threshold and reverse = True):
+        if (angles["pitch"] >= threshold and reverse == False) or (angles["pitch"] <= -threshold and reverse == True):
             mapper.switch_left()
             last_switch_time = current_time
-        elif (angles["pitch"] <= -threshold and reverse = False) or (angles["pitch"] >= threshold and reverse = True):
+        elif (angles["pitch"] <= -threshold and reverse == False) or (angles["pitch"] >= threshold and reverse == True):
             mapper.switch_right()
             last_switch_time = current_time
     return last_switch_time
