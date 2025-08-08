@@ -14,6 +14,18 @@ midi = BLEMidi(ble, name="MIDIMitts")
 mapper = FlexSensorMapper()
 
 
+def handle_imu_switching(angles, last_switch_time, mapper, cooldown_s=2, threshold=45, reverse:bool=False):
+    """Handle IMU-based switching based on pitch angle, with a set cooldown. Left/right can be reversed"""
+    current_time = time.time()
+    if current_time - last_switch_time >= cooldown_s:
+        if (angles["pitch"] >= threshold and reverse == False) or (angles["pitch"] <= -threshold and reverse == True):
+            mapper.switch_left()
+            last_switch_time = current_time
+        elif (angles["pitch"] <= -threshold and reverse == False) or (angles["pitch"] >= threshold and reverse == True):
+            mapper.switch_right()
+            last_switch_time = current_time
+    return last_switch_time
+
 def draw_frame(display, primary_text: list, secondary_text: str):
     display.fill_rect(0, 0, 128, 16, 1)
     display.text(secondary_text, 0, 0, 0)
@@ -28,17 +40,6 @@ def initialize():
     imu.save_settings()
     # Flex sensor calibration is now handled in FlexSensorMapper.__init__
 
-def handle_imu_switching(angles, last_switch_time, mapper, cooldown_s=2, threshold=45, reverse:bool=False):
-    """Handle IMU-based switching based on pitch angle, with a set cooldown. Left/right can be reversed"""
-    current_time = time.time()
-    if current_time - last_switch_time >= cooldown_s:
-        if (angles["pitch"] >= threshold and reverse == False) or (angles["pitch"] <= -threshold and reverse == True):
-            mapper.switch_left()
-            last_switch_time = current_time
-        elif (angles["pitch"] <= -threshold and reverse == False) or (angles["pitch"] >= threshold and reverse == True):
-            mapper.switch_right()
-            last_switch_time = current_time
-    return last_switch_time
 
 def main():
     last_switch_time = 0  # Initialize the time of the last switch
