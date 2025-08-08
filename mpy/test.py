@@ -1,36 +1,42 @@
 import time
 from machine import Pin, I2C
 import bluetooth
-import jy901b, ssd1306
+import jy901b, ssd1306, neopixel
 from ble_midi_instrument import BLEMidi, NOTE
 from flex_mapper import FlexSensorMapper
 
-i2c = I2C(0, sda=Pin(21), scl=Pin(20))
+i2c = I2C(0, sda=Pin(11), scl=Pin(10))
 ble = bluetooth.BLE()
 
+led = neopixel.NeoPixel(Pin(38, Pin.OUT), 1)
 display = ssd1306.SSD1306_I2C(128, 64, i2c)
-imu = jy901b.JY901B(uart_id=1, baudrate=9600, tx_pin=7, rx_pin=6)
+imu = jy901b.JY901B(uart_id=1, baudrate=9600, tx_pin=7, rx_pin=8)
 midi = BLEMidi(ble, name="MIDIMitts")
 mapper = FlexSensorMapper()
 
 
-def handle_imu_switching(angles, last_switch_time, mapper, cooldown_s=2, threshold=45, reverse:bool=False):
+def handle_imu_switching(angles, last_switch_time, mapper, cooldown_s=0.5, threshold=30, reverse:bool=False):
     """Handle IMU-based switching based on pitch angle, with a set cooldown. Left/right can be reversed"""
     current_time = time.time()
     if current_time - last_switch_time >= cooldown_s:
-        if (angles["pitch"] >= threshold and reverse == False) or (angles["pitch"] <= -threshold and reverse == True):
+        if (angles["roll"] >= threshold and reverse == False) or (angles["roll"] <= -threshold and reverse == True):
             mapper.switch_left()
             last_switch_time = current_time
-        elif (angles["pitch"] <= -threshold and reverse == False) or (angles["pitch"] >= threshold and reverse == True):
+            led[0]=(0, 255, 0)
+        elif (angles["roll"] <= -threshold and reverse == False) or (angles["roll"] >= threshold and reverse == True):
             mapper.switch_right()
             last_switch_time = current_time
+            led[0]=(255, 0, 0)
+    else:
+        led[0]=(0,0,0)
+    led.write()
     return last_switch_time
 
 def draw_frame(display, primary_text: list, secondary_text: str):
     display.fill_rect(0, 0, 128, 16, 1)
     display.text(secondary_text, 0, 0, 0)
     display.text(primary_text[0], 0, 16, 1)
-    display.text(str(primary_text[1]), 0, 32, 1)
+    display.text(primary_text[1], 0, 56, 1)
 
 def initialize():
     display.poweron()
@@ -64,8 +70,8 @@ def main():
             primary_text[1] += (note + " ")
         
         if angles:
-            secondary_text = str(angles['pitch'])
-            last_switch_time = handle_imu_switching(angles, last_switch_time, mapper)
+            secondary_text = str(angles['roll'])
+            last_switch_time = handle_imu_switching(angles, last_switch_time, mapper, reverse=True)
         
         draw_frame(display, primary_text, secondary_text)
         try:
