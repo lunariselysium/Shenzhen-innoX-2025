@@ -1,7 +1,7 @@
 import time
-from machine import Pin, I2C, UART
+from machine import Pin, I2C
 import bluetooth
-import jy901b, flexsensor, ssd1306
+import jy901b, ssd1306
 from ble_midi_instrument import BLEMidi, NOTE
 from flex_mapper import FlexSensorMapper
 
