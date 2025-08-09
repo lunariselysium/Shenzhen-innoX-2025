@@ -68,10 +68,10 @@ def main():
             print(footer)
             last_switch_time = handle_imu_switching(angles, last_switch_time, mapper, reverse=True)
         
-        display_manager.clear()
-        display_manager.draw_header(footer)
-        display_manager.draw_primary(primary_top, primary_bottom)
-        display_manager.update()
+        disp.clear()
+        disp.draw_header(footer)
+        disp.draw_primary(primary_top, primary_bottom)
+        disp.update()
         
         time.sleep(0.05)
 
