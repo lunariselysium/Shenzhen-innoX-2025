@@ -1,7 +1,7 @@
 import time
 from machine import Pin, I2C
 import bluetooth
-import jy901b, ssd1306, neopixel
+import jy901b, neopixel
 from ble_midi_instrument import BLEMidi, NOTE
 from flex_mapper import FlexSensorMapper
 from display_manager import DisplayManager
@@ -11,14 +11,13 @@ i2c = I2C(0, sda=Pin(11), scl=Pin(10))
 ble = bluetooth.BLE()
 
 led = neopixel.NeoPixel(Pin(38, Pin.OUT), 1)
-display = ssd1306.SSD1306_I2C(128, 64, i2c)
 imu = jy901b.JY901B(uart_id=1, baudrate=9600, tx_pin=7, rx_pin=8)
 midi = BLEMidi(ble, name="MIDIMitts")
 mapper = FlexSensorMapper()
-display_manager = DisplayManager(display)
+disp = DisplayManager(i2c)
 
 
-def handle_imu_switching(angles, last_switch_time, mapper, cooldown_ms=0.5, threshold=30, reverse:bool=False):
+def handle_imu_switching(angles, last_switch_time, mapper, cooldown_ms=500, threshold=30, reverse:bool=False):
     """Handle IMU-based switching based on pitch angle, with a set cooldown. Left/right can be reversed"""
     current_time = time.ticks_ms()
     if current_time - last_switch_time >= cooldown_ms:

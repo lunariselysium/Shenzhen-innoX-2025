@@ -1,5 +1,7 @@
 # display_manager.py
 from micropython import const
+import ssd1306
+from machine import I2C
 
 # Constants for layout
 _HEADER_HEIGHT = const(16)
@@ -7,8 +9,10 @@ _FOOTER_HEIGHT = const(8)
 _PADDING = const(2)
 
 class DisplayManager:
-    def __init__(self, display):
-        self.display = display
+    def __init__(self, i2c:I2C):
+        if not isinstance(i2c, I2C):
+            raise TypeError("pin must be a machine.I2C instance")
+        self.display = ssd1306.SSD1306_I2C(128, 64, i2c)
         self.display.poweron()
         self.display.contrast(255)
         self.clear()
