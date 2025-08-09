@@ -4,6 +4,8 @@ import bluetooth
 import jy901b, ssd1306, neopixel
 from ble_midi_instrument import BLEMidi, NOTE
 from flex_mapper import FlexSensorMapper
+from display_manager import DisplayManager
+
 
 i2c = I2C(0, sda=Pin(11), scl=Pin(10))
 ble = bluetooth.BLE()
@@ -13,6 +15,7 @@ display = ssd1306.SSD1306_I2C(128, 64, i2c)
 imu = jy901b.JY901B(uart_id=1, baudrate=9600, tx_pin=7, rx_pin=8)
 midi = BLEMidi(ble, name="MIDIMitts")
 mapper = FlexSensorMapper()
+display_manager = DisplayManager(display)
 
 
 def handle_imu_switching(angles, last_switch_time, mapper, cooldown_s=0.5, threshold=30, reverse:bool=False):
@@ -32,28 +35,20 @@ def handle_imu_switching(angles, last_switch_time, mapper, cooldown_s=0.5, thres
     led.write()
     return last_switch_time
 
-def draw_frame(display, primary_text: list, secondary_text: str):
-    display.fill_rect(0, 0, 128, 16, 1)
-    display.text(secondary_text, 0, 0, 0)
-    display.text(primary_text[0], 0, 16, 1)
-    display.text(primary_text[1], 0, 56, 1)
 
 def initialize():
-    display.poweron()
-    display.contrast(255)
-    display.fill(0)
     imu.set_output_types(["angles"])
     imu.save_settings()
-    # Flex sensor calibration is now handled in FlexSensorMapper.__init__
+    # Flex sensor calibration is handled in FlexSensorMapper.__init__
 
 
 def main():
     last_switch_time = 0  # Initialize the time of the last switch
     while True:
-        primary_text = ["",""]
-        secondary_text = ""
+        primary_top = ""
+        primary_bottom = ""
+        footer = ""
         
-        display.fill(0)
         imu.update()
         angles = imu.get_angles()
         
@@ -64,20 +59,20 @@ def main():
         for note in detriggered_notes:
             midi.note_off(NOTE[note])
         for note in active_notes:
-            primary_text[0] += (note + " ")
+            primary_top += (note + " ")
         
         for note in mapper.get_key_mappings():
-            primary_text[1] += (note + " ")
+            primary_bottom += (note + " ")
         
         if angles:
-            secondary_text = str(angles['roll'])
+            footer = str(angles['roll'])
+            print(footer)
             last_switch_time = handle_imu_switching(angles, last_switch_time, mapper, reverse=True)
         
-        draw_frame(display, primary_text, secondary_text)
-        try:
-            display.show()
-        except BaseException as e:
-            print(e)
+        display_manager.clear()
+        display_manager.draw_header(footer)
+        display_manager.draw_primary(primary_top, primary_bottom)
+        display_manager.update()
         
         time.sleep(0.05)
 
