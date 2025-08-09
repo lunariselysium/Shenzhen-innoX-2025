@@ -20,13 +20,17 @@ display_manager = DisplayManager(display)
 
 def handle_imu_switching(angles, last_switch_time, mapper, cooldown_s=0.5, threshold=30, reverse:bool=False):
     """Handle IMU-based switching based on pitch angle, with a set cooldown. Left/right can be reversed"""
-    current_time = time.time()
+    current_time = time.ticks_ms()
     if current_time - last_switch_time >= cooldown_s:
-        if (angles["roll"] >= threshold and reverse == False) or (angles["roll"] <= -threshold and reverse == True):
+        direction = angles["roll"] >= threshold
+        if reverse:
+            direction = not direction
+            
+        if direction:
             mapper.switch_left()
             last_switch_time = current_time
             led[0]=(0, 255, 0)
-        elif (angles["roll"] <= -threshold and reverse == False) or (angles["roll"] >= threshold and reverse == True):
+        elif not direction:
             mapper.switch_right()
             last_switch_time = current_time
             led[0]=(255, 0, 0)
