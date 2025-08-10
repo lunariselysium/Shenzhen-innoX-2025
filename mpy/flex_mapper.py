@@ -1,5 +1,5 @@
-#import flexsensor
-import button_flex as flexsensor
+import flexsensor
+#import button_flex as flexsensor
 
 class FlexSensorMapper:
     """
@@ -18,9 +18,10 @@ class FlexSensorMapper:
         and calibrates each sensor.
         """
         # Initialize flex sensors with specific ADC channels for buttons
-        self.flex_sensors = [flexsensor.flexSensor(i) for i in [0, 1, 2, 5, 8]]  # For buttons
+        self.flex_sensors = [flexsensor.flexSensor(i) for i in [5, 4, 3, 2, 1]]  # For buttons
         # Hardcode thresholds for each sensor
-        self.thresholds = (0.5, 0.5, 0.5, 0.5, 0.5)  # For buttons
+        #self.thresholds = (0.5, 0.5, 0.5, 0.5, 0.5)  # For buttons
+        self.thresholds = (60, 60, 60, 60, 60) # For flexsensors
         # Define the white keys of the piano from C3 to B5 (three octaves)
         self.note_list = [note + str(octave) for octave in range(3, 6) for note in ['C', 'D', 'E', 'F', 'G', 'A', 'B']]
         # Start with mapping to C4, D4, E4, F4, G4 (index 7 corresponds to 'C4')
@@ -90,7 +91,7 @@ class FlexSensorMapper:
             list: The current key mappings (five notes) after attempting to switch.
         """
         # Shift left by one, but not below index 0
-        self.start_index = max(0, self.start_index - 1)
+        self.start_index = max(0, self.start_index - 2)
         # Return the current mappings
         return self.get_key_mappings()
 
@@ -102,6 +103,6 @@ class FlexSensorMapper:
             list: The current key mappings (five notes) after attempting to switch.
         """
         # Shift right by one, but not beyond the end of the note list
-        self.start_index = min(len(self.note_list) - 5, self.start_index + 1)
+        self.start_index = min(len(self.note_list) - 5, self.start_index + 2)
         # Return the current mappings
         return self.get_key_mappings()

@@ -14,6 +14,7 @@ class flexSensor:
             readings.append(self.ADC.read())
             sleep(msInterval/1000)
         self.zeroValue = int(sum(readings)/len(readings))
+        
     
     def read(self):
         rawValue = self.ADC.read()
@@ -21,7 +22,7 @@ class flexSensor:
         return self.value
 
 if __name__ == "__main__":
-    fs = flexSensor(3)
+    fs = flexSensor(2)
     fs.calibrate()
     while True:
         print(fs.read())
