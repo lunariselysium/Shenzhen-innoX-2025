@@ -4,7 +4,7 @@ from time import sleep
 import bluetooth
 from ble_midi_instrument import BLEMidi, NOTE
 
-fs = flexsensor.flexSensor(0)
+fs = flexsensor.FlexSensor(0)
 #i2c = I2C(0,sda=Pin(0, Pin.IN, Pin.PULL_UP), scl=Pin(1, Pin.IN, Pin.PULL_UP))
 i2c = I2C(0, sda=Pin(21), scl=Pin(20))
 display = ssd1306.SSD1306_I2C(128, 64, i2c)

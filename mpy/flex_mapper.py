@@ -22,7 +22,7 @@ class FlexSensorMapper:
             thresholds (tuple):
         """
         # Initialize flex sensors with specific ADC channels for buttons
-        self.flex_sensors = [flexsensor.flexSensor(i) for i in sensor_pins]  # For buttons
+        self.flex_sensors = [flexsensor.FlexSensor(i) for i in sensor_pins]  # For buttons
         # Thresholds for each sensor
         self.thresholds = thresholds
         # Define the white keys of the piano from C3 to B5 (three octaves)
