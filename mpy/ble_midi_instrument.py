@@ -2,7 +2,6 @@ import bluetooth
 from micropython import const
 from time import sleep
 
-
 # IRQ constants
 _IRQ_CENTRAL_CONNECT = const(1)
 _IRQ_CENTRAL_DISCONNECT = const(2)
@@ -21,6 +20,7 @@ MIDI_SERVICE = (
         ),
     ),
 )
+
 
 # Note definitions
 def _generate_white_key_midi_mapping():
@@ -45,61 +45,63 @@ def _generate_white_key_midi_mapping():
 
     return note_mapping
 
-NOTE = _generate_white_key_midi_mapping()
 
+NOTE = _generate_white_key_midi_mapping()
 
 
 def advertising_payload(limited_discoverable=False, br_edr=False, name=None, services=None, appearance=0):
     """
     Generate BLE advertising payload.
-    
+
     Args:
         limited_discoverable (bool): Enable limited discoverable mode.
         br_edr (bool): Enable BR/EDR support.
         name (str): Device name for scan response.
         services (list): List of service UUIDs to advertise.
         appearance (int): Device appearance value.
-    
+
     Returns:
         bytearray: Advertising payload.
     """
     payload = bytearray()
-    
+
     def _append(ad_type, value_bytes):
         payload.extend(bytes((len(value_bytes) + 1, ad_type)))
         payload.extend(value_bytes)
-    
+
     # Flags
-    flags = bytearray((0x02 if limited_discoverable else 0x01) | 0x04,)
+    flags = bytearray((0x02 if limited_discoverable else 0x01) | 0x04, )
     _append(0x01, flags)
-    
+
     # Service UUIDs
     if services:
         for uuid in services:
             b = bytes(uuid)
             _append(0x07, b)
-    
+
     # Name (for scan response)
     if name:
         _append(0x09, name.encode())
-    
+
     return payload
+
 
 class BLEMidi:
     """
     BLE MIDI instrument class for sending MIDI messages over Bluetooth.
-    
+
     Args:
         ble (bluetooth.BLE): Bluetooth Low Energy object.
         name (str): Name of the device for advertising (default: "Pico-W-MIDI").
     """
+
     def __init__(self, ble, name="Pico-W-MIDI"):
         self._ble = ble
         self._ble.active(True)
         self._ble.irq(self._irq)
         ((self._handle,),) = self._ble.gatts_register_services((MIDI_SERVICE,))
         self._connections = set()
-        
+
         # Start advertising
         adv_data = advertising_payload(services=[_MIDI_SERVICE_UUID])
         scan_data = advertising_payload(name=name)
@@ -108,7 +110,7 @@ class BLEMidi:
     def _irq(self, event, data):
         """
         Handle BLE interrupts.
-        
+
         Args:
             event (int): Event type (e.g., connect, disconnect).
             data (tuple): Event data.
@@ -129,7 +131,7 @@ class BLEMidi:
     def send(self, midi_msg):
         """
         Send a MIDI message to all connected devices.
-        
+
         Args:
             midi_msg (bytearray): MIDI message to send.
         """
@@ -142,7 +144,7 @@ class BLEMidi:
     def note_on(self, note_number, velocity=127):
         """
         Send a MIDI Note On message.
-        
+
         Args:
             note_number (int): MIDI note number (0-127).
             velocity (int): Note velocity (0-127, default: 127).
@@ -153,18 +155,18 @@ class BLEMidi:
     def note_off(self, note_number, velocity=0):
         """
         Send a MIDI Note Off message.
-        
+
         Args:
             note_number (int): MIDI note number (0-127).
             velocity (int): Note velocity (0-127, default: 0).
         """
         note_off_message = bytearray([0x80, note_number, velocity])
         self.send(note_off_message)
-    
+
     def send_note(self, note_number, velocity=127, duration_s=1):
         """
         Send a MIDI Note on message, then send an off message after set interval
-        
+
         Args:
             note_number (int): MIDI note number (0-127).
             velocity (int): Note velocity (0-127, default: 0).
@@ -174,3 +176,27 @@ class BLEMidi:
         sleep(duration_s)
         note_off_message = bytearray([0x80, note_number, velocity])
         self.send(note_off_message)
+
+    def control_change(self, controller, value, channel=0):
+        """
+        Send a MIDI Control Change (CC) message.
+
+        Args:
+            controller (int): Controller number (0-127, e.g., 7 for volume).
+            value (int): Controller value (0-127).
+            channel (int): MIDI channel (0-15, default: 0 which corresponds to MIDI channel 1).
+        """
+        # Control Change status byte: 0xB0 + channel
+        status = 0xB0 + channel
+        cc_msg = bytearray([status, controller, value])
+        self.send(cc_msg)
+
+    def set_volume(self, value, channel=0):
+        """
+        Set the volume using MIDI CC 7 (Channel Volume MSB).
+
+        Args:
+            value (int): Volume value (0-127).
+            channel (int): MIDI channel (0-15, default: 0).
+        """
+        self.control_change(7, value, channel=channel)
