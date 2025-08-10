@@ -125,7 +125,7 @@ class ColorTransitionAnimation(Animation):
 
 class LightManager:
     """Controls multiple animations across LED segments."""
-    def __init__(self, pin: Pin, total_count: int, segment_count: int):
+    def __init__(self, pin: Pin, total_count: int, segment_count: int) -> None:
         if not isinstance(pin, Pin):
             raise TypeError("pin must be a machine.Pin instance")
 

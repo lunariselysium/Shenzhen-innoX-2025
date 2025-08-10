@@ -82,7 +82,8 @@ class FlexSensorMapper:
 
         # Print state changes if verbose mode is enabled
         if verbose:
-            print(f"Triggered: {triggered_notes}, Detriggered: {detriggered_notes}")
+            print(current_values)
+            #print(f"Triggered: {triggered_notes}, Detriggered: {detriggered_notes}")
 
         return triggered_notes, detriggered_notes, active_notes
 
