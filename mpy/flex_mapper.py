@@ -9,19 +9,22 @@ class FlexSensorMapper:
     detect triggered, detriggered, and active notes, and switch the note mappings across a range of piano keys.
     """
 
-    def __init__(self):
+    def __init__(self, sensor_pins: list = [5,4,3,2,1], thresholds: tuple = (60,60,60,60,60)):
         """
         Initializes the FlexSensorMapper.
 
         Sets up flex sensors with specific ADC channels, assigns hardcoded thresholds, defines a list of
         white piano keys from C3 to B5, sets the initial mapping to C4 through G4, initializes state tracking,
         and calibrates each sensor.
+
+        Args:
+            sensor_pins (list): List of ints for defining flex sensors.
+            thresholds (tuple):
         """
         # Initialize flex sensors with specific ADC channels for buttons
-        self.flex_sensors = [flexsensor.flexSensor(i) for i in [5, 4, 3, 2, 1]]  # For buttons
-        # Hardcode thresholds for each sensor
-        #self.thresholds = (0.5, 0.5, 0.5, 0.5, 0.5)  # For buttons
-        self.thresholds = (60, 60, 60, 60, 60) # For flexsensors
+        self.flex_sensors = [flexsensor.flexSensor(i) for i in sensor_pins]  # For buttons
+        # Thresholds for each sensor
+        self.thresholds = thresholds
         # Define the white keys of the piano from C3 to B5 (three octaves)
         self.note_list = [note + str(octave) for octave in range(3, 6) for note in ['C', 'D', 'E', 'F', 'G', 'A', 'B']]
         # Start with mapping to C4, D4, E4, F4, G4 (index 7 corresponds to 'C4')

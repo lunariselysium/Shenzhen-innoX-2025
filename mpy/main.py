@@ -13,7 +13,7 @@ ble = bluetooth.BLE()
 led = neopixel.NeoPixel(Pin(38, Pin.OUT), 1)
 imu = jy901b.JY901B(uart_id=1, baudrate=9600, tx_pin=7, rx_pin=8)
 midi = BLEMidi(ble, name="MIDIMitts")
-mapper = FlexSensorMapper()
+mapper = FlexSensorMapper(sensor_pins = [5,4,3,2,1], thresholds = (60,60,60,60,60))
 disp = DisplayManager(i2c)
 
 
