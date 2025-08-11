@@ -21,107 +21,82 @@ class Animation:
         """Update LEDs for this frame. Return False if finished."""
         raise NotImplementedError
 
+    def reset(self) -> None:
+        """Reset Animation start time."""
+        self.start_time = time.ticks_ms()
 
-class WipeAnimation(Animation):
-    def __init__(self, start_index: int, length: int, duration_ms: int, color: tuple, reverse=False):
-        super().__init__(start_index, length, duration_ms)
-        self.color = color
-        self.reverse = reverse
+class ScheduledAnimation:
+    """Wraps an animation with a start delay."""
+    def __init__(self, animation: Animation, delay_ms: int):
+        self.animation = animation
+        self.delay_ms = delay_ms
+        self.start_time = time.ticks_ms()
+        self.started = False
 
     def update(self, np: NeoPixel) -> bool:
+        """Update the animation if its delay has passed."""
         elapsed = time.ticks_diff(time.ticks_ms(), self.start_time)
-        step = int((elapsed / self.duration_ms) * self.length)
+        if elapsed < self.delay_ms:
+            return True  # Keep waiting
 
-        if step >= self.length:
-            for i in range(self.length):
-                np[self.start_index + i] = self.color
-            return False  # Done
+        if not self.started:
+            self.animation.reset()
+            self.started = True # Reset time when delay ends
 
-        for i in range(self.length):
-            idx = self.length - 1 - i if self.reverse else i
-            np[self.start_index + idx] = self.color if i <= step else (0, 0, 0)
+        return self.animation.update(np)  # Run the animation
+
+    def reset(self) -> None:
+        """Reset Scheduled animation."""
+        self.start_time = time.ticks_ms()
+        self.started = False
+
+class Sequence:
+    """Represents a sequence of animations with delays and replay settings."""
+    def __init__(self, animations: list, delays_ms: list, replay_count: int = 1):
+        """
+        Initialize a sequence.
+        - animations: List of Animation objects.
+        - delays_ms: List of start delays (in milliseconds) for each animation.
+        - replay_count: Number of times to replay the sequence (0 for infinite).
+        """
+        if len(animations) != len(delays_ms):
+            raise ValueError("Number of animations must match number of delays")
+        self.animations = animations
+        self.delays_ms = delays_ms
+        self.replay_count = replay_count  # 0 for infinite, >0 for finite replays
+        self.current_replay = 0
+        self.scheduled_animations = []
+        self.start_time = None
+        self.reset()
+
+    def reset(self):
+        """Reset the sequence to start from the beginning."""
+         # Reset each animation's internal state
+        for anim in self.animations:
+            anim.reset()
+        # Recreate scheduled animations to reset delay timers
+        self.scheduled_animations = [
+            ScheduledAnimation(anim, delay) for anim, delay in zip(self.animations, self.delays_ms)
+        ]
+        self.start_time = time.ticks_ms()
+        self.current_replay += 1
+
+    def update(self, np: NeoPixel) -> bool:
+        """Update all animations in the sequence. Return False if sequence is finished."""
+        still_running = []
+        for sched_anim in self.scheduled_animations:
+            if sched_anim.update(np):
+                still_running.append(sched_anim)
+
+        self.scheduled_animations = still_running
+
+        if not still_running:
+            # Sequence iteration finished
+            if self.replay_count == 0 or self.current_replay < self.replay_count:
+                self.reset()
+                return True
+            return False  # Sequence fully done
         return True
-    
-
-class SingleBlockWipeAnimation(Animation):
-    """
-    Sends a single block flying across the segment, starting before
-    the segment (off-screen) and ending off-screen beyond the segment.
-    """
-
-    def __init__(self, start_index: int, segment_length: int, block_length: int, duration_ms: int, color: tuple, reverse=False):
-        # The "length" in Animation is the visible segment length
-        super().__init__(start_index, segment_length, duration_ms)
-        self.block_length = block_length
-        self.color = color
-        self.reverse = reverse
-
-        # Total travel distance = segment length + block length (start off-screen to end off-screen)
-        self.travel_length = self.length + self.block_length
-
-    def update(self, np) -> bool:
-        elapsed = time.ticks_diff(time.ticks_ms(), self.start_time)
-        progress = elapsed / self.duration_ms
-
-        if progress >= 1.0:
-            # Clear the segment LEDs at the end (block fully off-screen)
-            for i in range(self.length):
-                idx = self.start_index + i if self.reverse else self.start_index + (self.length - 1 - i)
-                np[idx] = (0, 0, 0)
-            return False  # Animation finished
-
-        # Always calculate progress left-to-right, block starting at -block_length
-        block_start_pos = int(progress * self.travel_length) - self.block_length
-    
-        # Clear all LEDs in segment first
-        for i in range(self.length):
-            idx = self.start_index + i if self.reverse else self.start_index + (self.length - 1 - i)
-            np[idx] = (0, 0, 0)
-    
-        # Draw block only inside visible segment bounds
-        for i in range(self.block_length):
-            led_pos = block_start_pos + i
-            if 0 <= led_pos < self.length:
-                idx = self.start_index + led_pos if self.reverse else self.start_index + (self.length - 1 - led_pos)
-                np[idx] = self.color
-
-        return True  # Animation ongoing
-
-
-class ColorTransitionAnimation(Animation):
-    """
-    Fades segment to target color over time, or instantly if specified
-    """
-    def __init__(self, start_index: int, segment_length: int, duration_ms: int, target_color: tuple):
-        super().__init__(start_index, segment_length, duration_ms)
-        self.target_color = target_color
-        self.start_colors = [(0,0,0)] * segment_length  # We'll sample on first update
-        self.initialized = False
-
-    def update(self, np):
-        if not self.initialized:
-            # Sample current colors of the segment
-            self.start_colors = [np[self.start_index + i] for i in range(self.length)]
-            self.initialized = True
-            
-            if self.duration_ms == 0:
-                # Immediate fill - set target color and finish right away
-                for i in range(self.length):
-                    np[self.start_index + i] = self.target_color
-                return False # Animation done immediatly
-
-        elapsed = time.ticks_diff(time.ticks_ms(), self.start_time)
-        t = min(elapsed / self.duration_ms, 1.0)
-
-        for i in range(self.length):
-            c = lerp_color(self.start_colors[i], self.target_color, t)
-            np[self.start_index + i] = c
-
-        if t >= 1.0:
-            return False  # Finished fading
-        return True
-
-
 
 class LightManager:
     """Controls multiple animations across LED segments."""
@@ -141,6 +116,11 @@ class LightManager:
 
     def add_animation(self, animation: Animation):
         self.animations.append(animation)
+
+    def add_sequence(self, animations: list, delays_ms: list, replay_count: int = 1):
+        """Add a sequence of animations with delays and replay count."""
+        sequence = Sequence(animations, delays_ms, replay_count)
+        self.animations.append(sequence)
 
     def update(self):
         """Call this in your main loop to refresh LEDs."""

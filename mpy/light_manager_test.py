@@ -1,8 +1,9 @@
 from machine import Pin
-from lib.light_manager import LightManager, WipeAnimation, SingleBlockWipeAnimation, ColorTransitionAnimation
+from lib.light_manager import LightManager
+from lib.animations import *
 import time
 
-lm = LightManager(Pin(1, Pin.OUT), total_count = 50, segment_count = 5)
+lm = LightManager(Pin(1, Pin.OUT), total_count = 100, segment_count = 5)
 
 lm.add_animation(WipeAnimation(
     lm.get_segment_start(0), lm.segment_length, 1000, (255,0,0)))
@@ -17,7 +18,7 @@ t = time.ticks_ms()
 while True:
     lm.update()
     time.sleep_ms(20)
-    if time.ticks_diff(time.ticks_ms(), t) >= 5000:
+    if time.ticks_diff(time.ticks_ms(), t) >= 2000:
         break
 
 
@@ -31,5 +32,5 @@ t = time.ticks_ms()
 while True:
     lm.update()
     time.sleep_ms(20)
-    if time.ticks_diff(time.ticks_ms(), t) >= 5000:
+    if time.ticks_diff(time.ticks_ms(), t) >= 1000:
         break
