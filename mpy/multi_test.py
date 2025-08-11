@@ -1,8 +1,8 @@
 from machine import Pin, I2C, UART
-import jy901b, flexsensor, ssd1306
+from lib import jy901b, flexsensor, ssd1306
 from time import sleep
 import bluetooth
-from ble_midi_instrument import BLEMidi, NOTE
+from lib.ble_midi_instrument import BLEMidi, NOTE
 
 fs = flexsensor.FlexSensor(0)
 #i2c = I2C(0,sda=Pin(0, Pin.IN, Pin.PULL_UP), scl=Pin(1, Pin.IN, Pin.PULL_UP))

@@ -1,5 +1,5 @@
 from machine import Pin
-from light_manager import LightManager, WipeAnimation, SingleBlockWipeAnimation, ColorTransitionAnimation
+from lib.light_manager import LightManager, WipeAnimation, SingleBlockWipeAnimation, ColorTransitionAnimation
 import time
 
 lm = LightManager(Pin(1, Pin.OUT), total_count = 50, segment_count = 5)

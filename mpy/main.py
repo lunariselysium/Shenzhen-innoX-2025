@@ -1,16 +1,17 @@
 import time
 from machine import Pin, I2C
 import bluetooth
-import jy901b, neopixel
-from ble_midi_instrument import BLEMidi, NOTE
-from flex_mapper import FlexSensorMapper
-from display_manager import DisplayManager
+import neopixel
+from lib.jy901b import JY901B
+from lib.ble_midi_instrument import BLEMidi, NOTE
+from lib.flex_mapper import FlexSensorMapper
+from lib.display_manager import DisplayManager
 
 i2c = I2C(0, sda=Pin(11), scl=Pin(10))
 ble = bluetooth.BLE()
 
 led = neopixel.NeoPixel(Pin(38, Pin.OUT), 1)
-imu = jy901b.JY901B(uart_id=1, baudrate=9600, tx_pin=7, rx_pin=8)
+imu = JY901B(uart_id=1, baudrate=9600, tx_pin=7, rx_pin=8)
 midi = BLEMidi(ble, name="MIDIMitts")
 mapper = FlexSensorMapper(sensor_pins=[5, 4, 3, 2, 1], thresholds=(30, 20, 30, 20, 35))
 disp = DisplayManager(i2c)

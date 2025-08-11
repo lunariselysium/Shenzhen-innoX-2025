@@ -1,6 +1,6 @@
 import bluetooth
 import time
-from ble_midi_instrument import BLEMidi, NOTE
+from lib.ble_midi_instrument import BLEMidi
 
 # Initialize BLE
 ble = bluetooth.BLE()
