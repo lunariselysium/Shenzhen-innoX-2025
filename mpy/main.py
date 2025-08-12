@@ -16,7 +16,9 @@ ble = bluetooth.BLE()
 led = neopixel.NeoPixel(Pin(38, Pin.OUT), 1)
 imu = JY901B(uart_id=1, baudrate=9600, tx_pin=7, rx_pin=8)
 midi = BLEMidi(ble, name="MIDIMitts")
-mapper = FlexSensorMapper(sensor_pins=[5, 4, 3, 2, 1], thresholds=(20, 25, 35, 30, 38))
+#mapper = FlexSensorMapper(sensor_pins=[5, 4, 3, 2, 1], thresholds=(20, 25, 35, 30, 38)) # left
+mapper = FlexSensorMapper(sensor_pins=[1, 2, 3, 4, 5], thresholds=(20, 35, 30, 35, 35)) # right
+#mapper = FlexSensorMapper(sensor_pins=[5, 4, 3, 2, 1], thresholds=(0.5,0.5,0.5,0.5,0.5))
 disp = DisplayManager(i2c)
 lm = LightManager(Pin(9, Pin.OUT), total_count = 25, segment_count = 5)
 
@@ -32,7 +34,7 @@ palette  = [
 
 
 
-def handle_imu_switching(angles, accel, last_switch_time, mapper, cooldown_ms=500, threshold_roll=30, threshold_accel=10, reverse: bool = False):
+def handle_imu_switching(angles, accel, last_switch_time, mapper, cooldown_ms=500, threshold_roll=30, threshold_accel=5, reverse: bool = False):
     """Handle IMU-based switching based on pitch angle, with a set cooldown. Left/right can be reversed"""
     current_time = time.ticks_ms()
 
@@ -47,6 +49,9 @@ def handle_imu_switching(angles, accel, last_switch_time, mapper, cooldown_ms=50
             led[0] = (255, 0, 0)
         elif abs(accel["az"]-9.8) >= threshold_accel:
             mapper.toggle_black_white()
+            last_switch_time = current_time
+            led[0] = (0, 0, 255)
+
     else:
         led[0] = (0, 0, 0)
     led.write()

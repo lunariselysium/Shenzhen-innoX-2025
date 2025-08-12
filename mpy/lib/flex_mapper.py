@@ -1,7 +1,7 @@
 from lib import flexsensor
 
 
-# import button_flex as flexsensor
+#import lib.button_flex as flexsensor
 
 class FlexSensorMapper:
     """
