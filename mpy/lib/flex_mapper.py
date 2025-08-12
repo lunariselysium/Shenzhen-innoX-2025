@@ -1,7 +1,7 @@
 from lib import flexsensor
 
 
-#import button_flex as flexsensor
+# import button_flex as flexsensor
 
 class FlexSensorMapper:
     """
@@ -11,13 +11,13 @@ class FlexSensorMapper:
     detect triggered, detriggered, and active notes, and switch the note mappings across a range of piano keys.
     """
 
-    def __init__(self, sensor_pins: list = [5,4,3,2,1], thresholds: tuple = (60,60,60,60,60)):
+    def __init__(self, sensor_pins: list = [5, 4, 3, 2, 1], thresholds: tuple = (60, 60, 60, 60, 60)):
         """
         Initializes the FlexSensorMapper.
 
-        Sets up flex sensors with specific ADC channels, assigns hardcoded thresholds, defines a list of
-        white piano keys from C3 to B5, sets the initial mapping to C4 through G4, initializes state tracking,
-        and calibrates each sensor.
+        Sets up flex sensors with specific ADC channels, assigns hardcoded thresholds, defines lists of
+        white and black piano keys from octave 3 to 5, sets the initial mapping to white keys C4 through G4,
+        initializes state tracking, and calibrates each sensor.
 
         Args:
             sensor_pins (list): List of ints for defining flex sensors.
@@ -28,7 +28,12 @@ class FlexSensorMapper:
         # Thresholds for each sensor
         self.thresholds = thresholds
         # Define the white keys of the piano from C3 to B5 (three octaves)
-        self.note_list = [note + str(octave) for octave in range(3, 6) for note in ['C', 'D', 'E', 'F', 'G', 'A', 'B']]
+        self.white_notes = [note + str(octave) for octave in range(3, 6) for note in
+                            ['C', 'D', 'E', 'F', 'G', 'A', 'B']]
+        # Define the black keys of the piano from C#3 to A#5 (three octaves)
+        self.black_notes = [note + str(octave) for octave in range(3, 6) for note in ['C#', 'D#', 'F#', 'G#', 'A#']]
+        # Start with white keys
+        self.current_notes = self.white_notes
         # Start with mapping to C4, D4, E4, F4, G4 (index 7 corresponds to 'C4')
         self.start_index = 7
         # Initialize previous values to track state changes
@@ -36,16 +41,16 @@ class FlexSensorMapper:
         # Calibrate each flex sensor upon initialization
         for fs in self.flex_sensors:
             fs.calibrate()
-    
+
     def get_key_mappings(self):
         """
         Get current key mappings
-        
+
         Returns:
             list: The current key mappings (five notes) after attempting to switch.
         """
         # Return the current mappings
-        return self.note_list[self.start_index : self.start_index + 5]
+        return self.current_notes[self.start_index: self.start_index + 5]
 
     def read(self, verbose: bool = False):
         """
@@ -69,23 +74,23 @@ class FlexSensorMapper:
         for i in range(5):
             if current_values[i] and not self.previous_values[i]:
                 # Triggered: False to True transition
-                note = self.note_list[self.start_index + i]
+                note = self.current_notes[self.start_index + i]
                 triggered_notes.append(note)
             elif not current_values[i] and self.previous_values[i]:
                 # Detriggered: True to False transition
-                note = self.note_list[self.start_index + i]
+                note = self.current_notes[self.start_index + i]
                 detriggered_notes.append(note)
 
         # Update previous values to current values for the next read
         self.previous_values = current_values[:]
 
         # Determine currently active notes based on the latest sensor readings
-        active_notes = [self.note_list[self.start_index + i] for i in range(5) if current_values[i]]
+        active_notes = [self.current_notes[self.start_index + i] for i in range(5) if current_values[i]]
 
         # Print state changes if verbose mode is enabled
         if verbose:
             print(current_values)
-            #print(f"Triggered: {triggered_notes}, Detriggered: {detriggered_notes}")
+            # print(f"Triggered: {triggered_notes}, Detriggered: {detriggered_notes}")
 
         return triggered_notes, detriggered_notes, active_notes
 
@@ -109,6 +114,23 @@ class FlexSensorMapper:
             list: The current key mappings (five notes) after attempting to switch.
         """
         # Shift right by one, but not beyond the end of the note list
-        self.start_index = min(len(self.note_list) - 5, self.start_index + 2)
+        self.start_index = min(len(self.current_notes) - 5, self.start_index + 2)
         # Return the current mappings
         return self.get_key_mappings()
+
+    def toggle_black_white(self):
+        """
+        Toggles between mapping to white keys and black keys, resetting the start index to an appropriate
+        value for the selected mode (7 for white, 5 for black).
+
+        Returns:
+            list: The current key mappings (five notes) after toggling.
+        """
+        if self.current_notes is self.white_notes:
+            self.current_notes = self.black_notes
+            self.start_index = 5  # Start at C#4 to A#4 for black keys
+        else:
+            self.current_notes = self.white_notes
+            self.start_index = 7  # Start at C4 to G4 for white keys
+        return self.get_key_mappings()
+

@@ -23,30 +23,24 @@ MIDI_SERVICE = (
 
 
 # Note definitions
-def _generate_white_key_midi_mapping():
-    white_keys = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
+def _generate_key_midi_mapping():
     note_mapping = {}
-    midi = 21
-    octave = 0
+    midi = 21  # Start from A0
+    notes = ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#']
     note_index = 0
 
-    while midi <= 108:
-        note = white_keys[note_index]
-        if note == 'C' and midi >= 24:
-            octave = (midi // 12) - 1
-
-        note_name = f"{note}{octave}"
+    while midi <= 108:  # Up to C8
+        note_base = notes[note_index]
+        octave = (midi // 12) - 1
+        note_name = f"{note_base}{octave}"
         note_mapping[note_name] = midi
 
-        note_index = (note_index + 1) % len(white_keys)
+        note_index = (note_index + 1) % len(notes)
         midi += 1
-        while midi <= 108 and midi % 12 in [1, 3, 6, 8, 10]:
-            midi += 1
 
     return note_mapping
 
-
-NOTE = _generate_white_key_midi_mapping()
+NOTE = _generate_key_midi_mapping()
 
 
 def advertising_payload(limited_discoverable=False, br_edr=False, name=None, services=None, appearance=0):
