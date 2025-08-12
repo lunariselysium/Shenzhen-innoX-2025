@@ -1,7 +1,7 @@
 from machine import ADC, Pin
 from time import sleep
 
-class flexSensor:
+class FlexSensor:
     def __init__(self, ioPin:int):
         self.p = Pin(ioPin, Pin.IN, Pin.PULL_DOWN)
     
@@ -13,7 +13,7 @@ class flexSensor:
         return self.p.value()
 
 if __name__ == "__main__":
-    fs = flexSensor(3)
+    fs = FlexSensor(3)
     fs.calibrate()
     while True:
         print(fs.read())
