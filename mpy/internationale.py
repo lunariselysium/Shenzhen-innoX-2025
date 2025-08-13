@@ -63,8 +63,8 @@ the_internationale = [
 
     (get_note(6), EIGHTH), (get_note(7), EIGHTH),
     (get_note(1,1), EIGHTH), (get_note(7), QUARTER),
-    (get_note(2,1), QUARTER), (get_note(1,1), DOTTED_QUARTER),
-    (get_note(1,1), EIGHTH), (get_note(6), QUARTER),
+    (get_note(2,1), QUARTER), (get_note(1,1), int(EIGHTH+EIGHTH/2)),
+    (get_note(1,1), int(EIGHTH/2)), (get_note(6), QUARTER),
     (get_note(5), HALF), (get_note(5), EIGHTH),
     (get_note(0), EIGHTH),
 
