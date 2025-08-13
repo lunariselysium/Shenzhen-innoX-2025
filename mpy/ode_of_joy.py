@@ -10,7 +10,7 @@ R = (255,0,0)
 G = (0,255,0)
 B = (0,0,255)
 
-lm = LightManager(Pin(1, Pin.OUT), total_count = 100, segment_count = 5)
+lm = LightManager(Pin(9, Pin.OUT), total_count = 100, segment_count = 5)
 
 segment_starts = [
     lm.get_segment_start(0),
@@ -27,9 +27,20 @@ SingleBlockWipeAnimation(segment_starts[2], segment_length, 10, a*16, R): 0,
 SingleBlockWipeAnimation(segment_starts[2], segment_length, 10, a*16, G): a*16,
 SingleBlockWipeAnimation(segment_starts[3], segment_length, 10, a*16, B): a*16*2,
 SingleBlockWipeAnimation(segment_starts[4], segment_length, 10, a*16, R): a*16*3,
+SingleBlockWipeAnimation(segment_starts[4], segment_length, 10, a*16, G): a*16*4,
+SingleBlockWipeAnimation(segment_starts[3], segment_length, 10, a*16, B): a*16*5,
+SingleBlockWipeAnimation(segment_starts[2], segment_length, 10, a*16, R): a*16*6,
+SingleBlockWipeAnimation(segment_starts[1], segment_length, 10, a*16, G): a*16*7,
+SingleBlockWipeAnimation(segment_starts[0], segment_length, 10, a*16, B): a*16*8,
+SingleBlockWipeAnimation(segment_starts[0], segment_length, 10, a*16, R): a*16*9,
+SingleBlockWipeAnimation(segment_starts[1], segment_length, 10, a*16, G): a*16*10,
+SingleBlockWipeAnimation(segment_starts[2], segment_length, 10, a*16, B): a*16*11,
+SingleBlockWipeAnimation(segment_starts[2], segment_length, 10, a*16, R): a*16*12,
+SingleBlockWipeAnimation(segment_starts[1], segment_length, 10, a*16, G): a*16*13,
+SingleBlockWipeAnimation(segment_starts[1], segment_length, 10, a*16, B): a*16*14,
 }
 
-lm.add_sequence(list(animations_and_delays.keys()), list(animations_and_delays.values()), replay_count=5)
+lm.add_sequence(list(animations_and_delays.keys()), list(animations_and_delays.values()), replay_count=50000)
 
 while True:
     lm.update()

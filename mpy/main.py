@@ -13,7 +13,8 @@ from lib.light_manager import LightManager
 from lib.animations import WipeAnimation, ColorTransitionAnimation
 
 Pin(13,Pin.OUT).value(1)
-fake_control_pin = Pin(12,Pin.IN)
+Pin(14,Pin.OUT).value(0)
+fake_control_pin = Pin(12,Pin.IN, Pin.PULL_DOWN)
 if fake_control_pin.value():
     fake_on = True
 else:
@@ -56,16 +57,16 @@ palette  = [
 
 
 
-def handle_imu_switching(angles, accel, last_switch_time, mapper, cooldown_ms=500, threshold_roll=30, threshold_accel=5, reverse: bool = False):
+def handle_imu_switching(angles, accel, last_switch_time, mapper, cooldown_ms=500, threshold_pitch=30, threshold_accel=5, reverse: bool = False):
     """Handle IMU-based switching based on pitch angle, with a set cooldown. Left/right can be reversed"""
     current_time = time.ticks_ms()
 
     if current_time - last_switch_time >= cooldown_ms:
-        if (angles["roll"] >= threshold_roll and reverse == False) or (angles["roll"] <= -threshold_roll and reverse == True):
+        if (angles["pitch"] >= threshold_pitch and reverse == False) or (angles["pitch"] <= -threshold_pitch and reverse == True):
             mapper.switch_left()
             last_switch_time = current_time
             led[0] = (0, 255, 0)
-        elif (angles["roll"] <= -threshold_roll and reverse == False) or (angles["roll"] >= threshold_roll and reverse == True):
+        elif (angles["pitch"] <= -threshold_pitch and reverse == False) or (angles["pitch"] >= threshold_pitch and reverse == True):
             mapper.switch_right()
             last_switch_time = current_time
             led[0] = (255, 0, 0)
@@ -149,14 +150,18 @@ def main():
             except ValueError:
                 pass
 
-        for note in active_notes:
-            primary_top += (note + " ")
+        # for note in active_notes:
+            # primary_top += (note + " ")
 
         for note in mapper.get_key_mappings():
+            if note in active_notes:
+                primary_top += "1 "
+            else:
+                primary_top += "0 "
             primary_bottom += (note + " ")
 
         if angles and accel:
-            footer = str(angles['roll'])
+            footer = str(angles['pitch'])
             #print(footer)
             last_switch_time = handle_imu_switching(angles, accel, last_switch_time, mapper, reverse=True)
 

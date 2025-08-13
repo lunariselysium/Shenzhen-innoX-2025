@@ -1,5 +1,5 @@
 # Internationale (B♭ major) - tempo ♩ = 72
-BPM = 144
+BPM = 72
 QUARTER = int(60000 / BPM)  # ms per quarter note
 HALF = QUARTER * 2
 WHOLE = QUARTER * 4
